@@ -22,13 +22,17 @@ func TimeTrack(start time.Time, name string) {
 }
 
 func LoadConfig(filepath string, iface interface{}) error {
+	// set interface default value by tags.
+	err := setDefault(iface)
+	if err != nil {
+		return err
+	}
+	// open config.ini.
 	cfg, err := ini.Load(filepath)
 	if err != nil {
 		return err
 	}
-	if err = setDefault(iface); err != nil {
-		return err
-	}
+	// try load config from ini file.
 	t := reflect.TypeOf(iface)
 	if err = cfg.Section(t.Elem().Name()).MapTo(iface); err != nil {
 		return err
