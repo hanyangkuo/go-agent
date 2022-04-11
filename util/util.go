@@ -23,7 +23,7 @@ func TimeTrack(start time.Time, name string) {
 
 func LoadConfig(filepath string, iface interface{}) error {
 	// set interface default value by tags.
-	err := setDefault(iface)
+	err := SetDefault(iface)
 	if err != nil {
 		return err
 	}
@@ -34,13 +34,19 @@ func LoadConfig(filepath string, iface interface{}) error {
 	}
 	// try load config from ini file.
 	t := reflect.TypeOf(iface)
-	if err = cfg.Section(t.Elem().Name()).MapTo(iface); err != nil {
+	if cfg.HasSection(t.Elem().Name()){
+		if err = cfg.Section(t.Elem().Name()).MapTo(iface); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err = cfg.MapTo(iface); err != nil {
 		return err
 	}
 	return nil
 }
 
-func setDefault(v interface{}) error {
+func SetDefault(v interface{}) error {
 	typ := reflect.TypeOf(v)
 	val := reflect.ValueOf(v)
 	if typ.Kind() == reflect.Ptr {
@@ -61,6 +67,11 @@ func setDefault(v interface{}) error {
 			case reflect.Int64:
 				if value, err := strconv.ParseInt(defaultValue,10,64); err == nil {
 					val.Field(i).SetInt(value)
+				}
+			case reflect.Float32:
+			case reflect.Float64:
+				if value, err := strconv.ParseFloat(defaultValue,64); err == nil {
+					val.Field(i).SetFloat(value)
 				}
 			case reflect.String:
 				val.Field(i).SetString(defaultValue)
