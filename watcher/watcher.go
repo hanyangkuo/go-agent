@@ -82,7 +82,7 @@ func isWatcherHealthy(watcherState chan<- struct{}) {
 			break
 		}
 		if exceedMemoryLimit(change) {
-			log.Warn("exceed memory limit.")
+			log.Warnf("exceed memory limit. %.3f MB", float32(change.footprint)/1024/1024)
 			break
 		}
 		time.Sleep(time.Duration(watchDog.Interval)*time.Second)

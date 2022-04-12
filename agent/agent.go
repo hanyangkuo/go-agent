@@ -49,7 +49,7 @@ func init() {
 	rootDir = filepath.Dir(exepath)
 	os.Mkdir(filepath.Join(rootDir, "log"), os.ModePerm)
 	file, err := rotatelogs.New(
-		filepath.Join(rootDir, "log", "agent.log.%Y%m%d"),
+		filepath.Join(rootDir, "log", "agent_grow.log.%Y%m%d"),
 		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour),
 		rotatelogs.WithRotationTime(time.Duration(24)*time.Hour),
 	)
@@ -79,7 +79,7 @@ func main() {
 	log.Print("Wait for watcher quit.")
 
 	tick := time.Tick(time.Minute)
-	count := 50
+	count := 1
 loop:
 	for {
 		select {
@@ -88,6 +88,7 @@ loop:
 			log.Infof("announce %d MB []byte", count)
 			a := make([]byte, count*1024*1024)
 			runtime.SetFinalizer(&a, nil)
+			count++
 		case <-watcherState:
 			break loop
 		case <- tick:
