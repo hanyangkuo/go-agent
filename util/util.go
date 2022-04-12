@@ -64,9 +64,16 @@ func SetDefault(v interface{}) error {
 					val.Field(i).SetBool(value)
 				}
 			case reflect.Int:
+			case reflect.Int32:
 			case reflect.Int64:
 				if value, err := strconv.ParseInt(defaultValue,10,64); err == nil {
 					val.Field(i).SetInt(value)
+				}
+			case reflect.Uint:
+			case reflect.Uint32:
+			case reflect.Uint64:
+				if value, err := strconv.ParseUint(defaultValue,10,64); err == nil {
+					val.Field(i).SetUint(value)
 				}
 			case reflect.Float32:
 			case reflect.Float64:

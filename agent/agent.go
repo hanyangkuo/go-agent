@@ -2,6 +2,8 @@ package main
 
 import (
 	"com.young/agent/util"
+	"com.young/agent/watcher"
+	_ "com.young/agent/watcher"
 	"crypto/aes"
 	"crypto/cipher"
 	"flag"
@@ -16,11 +18,20 @@ import (
 	"time"
 )
 
+
 const version = "1.0.0"
 
 var (
 	rootDir = ""
 )
+//var a := sync.Pool{
+//
+//}
+
+type Config struct {
+	Timeout int64 `ini:"timeout" default:"10"`
+	UpdatePack bool `ini:"updatepack" default:"false"`
+}
 
 func init() {
 	flagVerbose := flag.Bool("verbose", false, "")
@@ -52,30 +63,37 @@ func init() {
 	} else {
 		log.SetOutput(file)
 	}
+	err = watcher.Initialize(`agent.ini`)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 
 func main() {
-	go func(){
-		for {
-			calculate()
-		}
-	}()
-	for {
-
-		//userTime, kernelTime, residentSize, totalSize := getProcessRow()
-		////fmt.Println(userTime, kernelTime, residentSize, totalSize)
-		//fmt.Println(residentSize, totalSize)
-		//fmt.Printf("residentSize: %d\ttotalSize: %d\n", residentSize, totalSize)
-		//p := &process.Process{Pid: int32(os.Getpid())}
-		//m, err := p.MemoryInfo()
-		//if err != nil {
-		//	log.Println(err)
-		//}
-		//fmt.Printf("RSS: %d\tVMS: %d\n", m.RSS, m.VMS)
-		time.Sleep(time.Second)
+	var watcherState <-chan struct{}
+	if watcher.IsEnable() {
+		log.Info("start watchdog.")
+		watcherState = watcher.Watcher()
 	}
+	log.Print("Wait for watcher quit.")
+
+	count := 50
+loop:
+	for {
+		select {
+		case <- time.After(time.Second*5):
+			log.Info("agent is running...")
+			_ = make([]byte, count*1024*1024)
+			//count += 50
+		case <-watcherState:
+			break loop
+		}
+	}
+
+	log.Info("Watchdog quit.")
 }
+
 var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}
 func calculate() {
 	//需要去加密的字串
