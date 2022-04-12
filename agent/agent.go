@@ -78,16 +78,20 @@ func main() {
 	}
 	log.Print("Wait for watcher quit.")
 
+	tick := time.Tick(time.Minute)
 	count := 50
 loop:
 	for {
 		select {
 		case <- time.After(time.Second*5):
-			log.Info("agent is running...")
-			_ = make([]byte, count*1024*1024)
-			//count += 50
+			calculate()
+			log.Infof("announce %d MB []byte", count)
+			a := make([]byte, count*1024*1024)
+			runtime.SetFinalizer(&a, nil)
 		case <-watcherState:
 			break loop
+		case <- tick:
+			runtime.GC()
 		}
 	}
 
